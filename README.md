@@ -13,3 +13,6 @@ A: Just click the row once. The room number will be copied to clipboard automati
 
 Q: Is this dangerous?<br />
 A: That's why the code published here. :)
+
+### Copyright
+This program is distributed as GPL V3.
