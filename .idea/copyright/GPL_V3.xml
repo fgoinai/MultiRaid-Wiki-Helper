@@ -1,0 +1,6 @@
+<component name="CopyrightManager">
+  <copyright>
+    <option name="myName" value="GPL V3" />
+    <option name="notice" value="File: &amp;#36;file.fileName&#10;&#10;This program is free software; you can redistribute it and/or&#10;modify it under the terms of the GNU General Public License&#10;as published by the Free Software Foundation; version 3&#10;of the License.&#10;&#10;Project: &amp;#36;project.name&#10;Author: &amp;#36;username&#10;Copyright (c) &amp;#36;today.year. FGO Production. All right reserved" />
+  </copyright>
+</component>
