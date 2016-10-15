@@ -9,6 +9,7 @@ import java.util.*
 
 class Yaminabe {
     val maxListLen = 10
+    val spacing = "    "
 
     fun getList(path: String, isBaha: Boolean) : ArrayList<kotlin.String>? {
         try {
@@ -26,11 +27,11 @@ class Yaminabe {
                     }
                     val tempBuffer = StringBuilder()
                     if (!isBaha) {
-                        tempBuffer.append(buffer.split("<li>")[1].split(Regex("\\w{8}"))[0])
-                        tempBuffer.append("    ")
+                        tempBuffer.append(buffer.split("<li>")[1].split(Regex("\\w{8}"))[0].replace(" ", ""))
+                        tempBuffer.append(spacing)
                     }
-                    tempBuffer.append(temp[0].toUpperCase())
-                    tempBuffer.append("    ")
+                    tempBuffer.append(temp[0].toUpperCase().replace(" ", ""))
+                    tempBuffer.append(spacing)
                     tempBuffer.append(buffer.split("<span class=\"comment_date\">")[1].split("<")[0].toUpperCase())
                     while (list.size >= maxListLen)
                         list.remove(list[0])
