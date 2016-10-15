@@ -21,9 +21,9 @@ import java.util.*
 class MainWindow : Application() {
 
     companion object {
-        private val thread = Thread()
         private val urlList = ArrayList<String>()
         private var listView = ListView<String>()
+        private val obList = FXCollections.observableArrayList<String>()
 
         private val tutContent = "此程式會以30秒的間隔自動更新\r\n" +
                 "看到有場就點一下好了,會自動複製到剪貼版\r\n" +
@@ -34,9 +34,9 @@ class MainWindow : Application() {
             launch(MainWindow::class.java)
         }
 
-        private fun items(path: String, isBaha: Boolean) :ObservableList<String> {
-            val list = Yaminabe().getList(path, isBaha)
-            return FXCollections.observableArrayList<String>(list)
+        private fun renewItems(path: String, isBaha: Boolean) {
+            obList.removeAll(obList)
+            obList.addAll(Yaminabe().getList(path, isBaha) as ArrayList)
         }
     }
 
@@ -51,6 +51,7 @@ class MainWindow : Application() {
         val borderPane = BorderPane()
 
         listView.prefWidthProperty().bind(scene.widthProperty())
+        listView.items = obList
 
         tabPane.tabClosingPolicy = TabPane.TabClosingPolicy.UNAVAILABLE
         tabPane.tabs.add(buildTutorialTab())
@@ -68,7 +69,12 @@ class MainWindow : Application() {
             if (destTab.text == "教學") {
                 fillTutorialTabContent(destTab)
             } else {
-                renewList(items(urlList[tabPane.tabs.indexOf(destTab) - 1], tabPane.tabs.indexOf(destTab) == 1))
+                val runnable = Runnable {
+                    renewItems(urlList[tabPane.tabs.indexOf(destTab) - 1], tabPane.tabs.indexOf(destTab) == 1)
+                }
+                val thread = Thread(runnable)
+                thread.isDaemon = true
+                thread.start()
                 fillTabContent(destTab)
             }
         }
@@ -117,10 +123,6 @@ class MainWindow : Application() {
 
     fun clearTabContent (tab: Tab) {
         tab.content = null
-    }
-
-    fun renewList(listItems: ObservableList<String>) {
-        listView.items = listItems
     }
 
 }

@@ -32,8 +32,8 @@ class Yaminabe {
                     tempBuffer.append(temp[0].toUpperCase())
                     tempBuffer.append("    ")
                     tempBuffer.append(buffer.split("<span class=\"comment_date\">")[1].split("<")[0].toUpperCase())
-                    if (list.size == maxListLen)
-                        list.drop(0)
+                    while (list.size >= maxListLen)
+                        list.remove(list[0])
                     list.add(tempBuffer.toString())
 
                 }
