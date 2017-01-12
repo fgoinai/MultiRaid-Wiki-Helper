@@ -8,6 +8,9 @@ Please use with caution.
 1. Oracle JRE 8 64-bit OR
 2. OpenJRE 8 64-bit + OpenJFX 8 64-bit
 
+### Download
+[Click Here](https://mega.nz/#!tVkmzbqS!uv8q80R9AFamtJTJDSWd2XQUZvFMkSjQBRk8OOenXa4)
+
 ### FAQ
 Q: How can I get the room number? <br />
 A: Just click the row once. The room number will be copied to clipboard automatically.
