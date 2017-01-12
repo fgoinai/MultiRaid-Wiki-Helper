@@ -1,0 +1,33 @@
+version '1.0-SNAPSHOT'
+
+apply plugin: 'application'
+
+buildscript {
+    ext.kotlin_version = '1.0.5-3'
+
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+    }
+}
+
+apply plugin: 'kotlin'
+
+repositories {
+    mavenCentral()
+}
+
+mainClassName = "view.MainWindow"
+jar {
+    manifest {
+        attributes 'Main-Class': mainClassName
+    }
+    from {configurations.compile.collect { it.isDirectory() ? it : zipTree(it)}}
+}
+
+dependencies {
+    compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+    compile group: 'eu.hansolo.enzo', name: 'Enzo', version: '0.3.6'
+}
