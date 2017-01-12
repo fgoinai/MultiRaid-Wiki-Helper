@@ -5,7 +5,8 @@ This is used for GBF wiki raid finding. The default refresh time is 30 seconds.
 Please use with caution.
 
 ### Requirements
-JRE 8 64-bit
+1. Oracle JRE 8 64-bit OR
+2. OpenJRE 8 64-bit + OpenJFX 8 64-bit
 
 ### FAQ
 Q: How can I get the room number? <br />
