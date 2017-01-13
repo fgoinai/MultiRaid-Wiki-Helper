@@ -35,17 +35,20 @@ import lib.Yaminabe
 import java.awt.Toolkit
 import java.awt.datatransfer.StringSelection
 import java.util.*
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 
 class MainWindow : Application() {
 
     companion object {
-        private var thread = Thread()
+        //        private var thread = Thread()
         private val urlList = ArrayList<String>()
         private val normalList = ArrayList<String>()
         private var listView = lazy { ListView<String>() }
         private val obList = FXCollections.observableArrayList<String>()
         private var flag = 0
         private var topMsg = ""
+        private var threadPool = Executors.newSingleThreadScheduledExecutor()
 
         private val tutContent = "此程式會以30秒的間隔自動更新\r\n" +
                 "看到有場就點一下好了,會自動複製到剪貼版\r\n" +
@@ -58,19 +61,24 @@ class MainWindow : Application() {
         }
 
         private fun renewItems(path: String, isBaha: Boolean, isNormal: Boolean = false, filter: Any = "", inverseNormal: Boolean = false) {
-            obList.removeAll(obList)
+            var list: ArrayList<String>
+            Platform.runLater { obList.removeAll(obList) }
             if (!isNormal) {
-                obList.addAll(Yaminabe().getList(path, isBaha, filter = filter) as ArrayList)
+                list = Yaminabe().getList(path, isBaha, filter = filter) as ArrayList
             } else if (!inverseNormal) {
-                obList.addAll(Yaminabe().getList(path, isBaha, isNormal, filter) as ArrayList)
+                list = Yaminabe().getList(path, isBaha, isNormal, filter) as ArrayList
             } else {
-                obList.addAll(Yaminabe().getList(path, isBaha, isNormal, filter, inverseNormal) as ArrayList)
+                list = Yaminabe().getList(path, isBaha, isNormal, filter, inverseNormal) as ArrayList
             }
-            if (topMsg != obList[0]) {
-                topMsg = obList[0]
-                Platform.runLater { showNoti(topMsg, topMsg.split(" ").filter { it.matches(Regex("\\w{8}")) }[0]) }
+            Platform.runLater {
+                obList.addAll(list)
+                list.clear()
+                if (topMsg != obList[0]) {
+                    topMsg = obList[0]
+                    showNoti(topMsg, topMsg.split(" ").filter { it.matches(Regex("\\w{8}")) }[0])
+                }
+//                System.gc()
             }
-            System.gc()
         }
 
         private var instance: Notification.Notifier? = null
@@ -123,26 +131,27 @@ class MainWindow : Application() {
             if (destTab.text == "教學") {
                 fillTutorialTabContent(destTab)
             } else {
-                flag = flag or (1 shl tabPane.tabs.indexOf(destTab) - 1)
+//                flag = flag or (1 shl tabPane.tabs.indexOf(destTab) - 1)
 //                print(tabPane.tabs.indexOf(destTab) - 1)
 //                print("    ")
 //                println(flag)
+                threadPool.shutdownNow()
+                threadPool = Executors.newSingleThreadScheduledExecutor()
                 val runnable = Runnable {
-                    while (flag and (1 shl tabPane.tabs.indexOf(destTab) - 1) == (1 shl tabPane.tabs.indexOf(destTab) - 1)) {
-//                        println(destTab.text)
-                        when (destTab.text) {
-                            "大巴 150LV", "召喚終突", "方陣HL" -> renewItems(urlList[tabPane.tabs.indexOf(destTab) - 1], tabPane.tabs.indexOf(destTab) == 1)
-                            "丁丁" -> renewItems(urlList[3], tabPane.tabs.indexOf(destTab) == 1, true, normalList[0])
-                            "小巴" -> renewItems(urlList[3], tabPane.tabs.indexOf(destTab) == 1, true, normalList[1])
-                            "麒麟/黃龍" -> renewItems(urlList[3], tabPane.tabs.indexOf(destTab) == 1, true, normalList.subList(2, 4))
-                            "其他" -> renewItems(urlList[3], tabPane.tabs.indexOf(destTab) == 1, true, normalList, true)
-                        }
-                        Thread.sleep(30 * 1000)
+                    primaryStage.setOnCloseRequest { threadPool.shutdownNow() }
+                    //                        println(destTab.text)
+                    when (destTab.text) {
+                        "大巴 150LV", "召喚終突", "方陣HL" -> renewItems(urlList[tabPane.tabs.indexOf(destTab) - 1], tabPane.tabs.indexOf(destTab) == 1)
+                        "丁丁" -> renewItems(urlList[3], tabPane.tabs.indexOf(destTab) == 1, true, normalList[0])
+                        "小巴" -> renewItems(urlList[3], tabPane.tabs.indexOf(destTab) == 1, true, normalList[1])
+                        "麒麟/黃龍" -> renewItems(urlList[3], tabPane.tabs.indexOf(destTab) == 1, true, normalList.subList(2, 4))
+                        "其他" -> renewItems(urlList[3], tabPane.tabs.indexOf(destTab) == 1, true, normalList, true)
                     }
                 }
-                thread = Thread(runnable)
-                thread.isDaemon = true
-                thread.start()
+//                thread = Thread(runnable)
+//                thread.isDaemon = true
+//                thread.start()
+                threadPool.scheduleAtFixedRate(runnable, 0, 30, TimeUnit.SECONDS)
                 fillTabContent(destTab)
             }
         }
@@ -152,6 +161,7 @@ class MainWindow : Application() {
 
         root.children.add(borderPane)
         primaryStage.scene = scene
+        primaryStage.setOnCloseRequest { Platform.exit() }
         primaryStage.show()
     }
 
