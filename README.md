@@ -9,7 +9,7 @@ Please use with caution.
 2. OpenJRE 8 64-bit + OpenJFX 8 64-bit
 
 ### Download
-[Click Here](https://mega.nz/#!tVkmzbqS!uv8q80R9AFamtJTJDSWd2XQUZvFMkSjQBRk8OOenXa4)
+[Click Here](https://mega.nz/#!RdFhQQyA!VGIoI09e9xQND9Tis46fjmZvoGXkV2vGOtd6bz5gWaI)
 
 ### FAQ
 Q: How can I get the room number? <br />
