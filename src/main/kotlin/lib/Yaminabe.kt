@@ -21,8 +21,11 @@ import java.nio.charset.Charset
 import java.util.*
 
 class Yaminabe {
-    val maxListLen = 10
-    val spacing = "    "
+    companion object {
+        val maxListLen = 10
+        val spacing = "    "
+        val idPattern = Regex("\\w{8}")
+    }
 
     fun getList(path: String, isBaha: Boolean, isNormal: Boolean = false, filter: Any, inverseNormal: Boolean = false): ArrayList<kotlin.String>? {
         try {
@@ -34,24 +37,33 @@ class Yaminabe {
             while (true) {
                 buffer = java.lang.String(reader.readLine()?.toByteArray() ?: break, "UTF-8") as String
                 if (buffer.contains("<span class=\"comment_date\">")) {
-                    val temp = buffer.split(Regex("\\W")).filter { it.matches(Regex("\\w{8}")) }
+                    val temp = buffer.split(Regex("\\W")).filter { it.matches(idPattern) }
                     if (temp.size == 0) {
                         continue
                     }
                     val tempBuffer = StringBuilder()
-                    if (!isBaha) {
-                        if (isNormal) {
-                            val target = buffer.split("<li>")[1].split(Regex("\\w{8}"))[0].replace(" ", "").replace("　", "")
-                            if (!inverseNormal) {
-                                if (filter is String) {
-                                    if (target == filter) {
-                                        tempBuffer.append(target)
-                                        tempBuffer.append(spacing)
+                    try {
+                        if (!isBaha) {
+                            if (isNormal) {
+                                val target = buffer.split("<li>")[1].split(idPattern)[0].replace(" ", "").replace("　", "")
+                                if (!inverseNormal) {
+                                    if (filter is String) {
+                                        if (target == filter) {
+                                            tempBuffer.append(target)
+                                            tempBuffer.append(spacing)
+                                        } else {
+                                            continue
+                                        }
                                     } else {
-                                        continue
+                                        if ((filter as List<String>).contains(target)) {
+                                            tempBuffer.append(target)
+                                            tempBuffer.append(spacing)
+                                        } else {
+                                            continue
+                                        }
                                     }
                                 } else {
-                                    if ((filter as List<String>).contains(target)) {
+                                    if (!(filter as List<String>).contains(target)) {
                                         tempBuffer.append(target)
                                         tempBuffer.append(spacing)
                                     } else {
@@ -59,25 +71,22 @@ class Yaminabe {
                                     }
                                 }
                             } else {
-                                if (!(filter as List<String>).contains(target)) {
-                                    tempBuffer.append(target)
-                                    tempBuffer.append(spacing)
-                                } else {
-                                    continue
-                                }
+                                tempBuffer.append(buffer.split("<li>")[1].split(idPattern)[0].replace(" ", "").replace("　", ""))
+                                tempBuffer.append(spacing)
                             }
-                        } else {
-                            tempBuffer.append(buffer.split("<li>")[1].split(Regex("\\w{8}"))[0].replace(" ", ""))
-                            tempBuffer.append(spacing)
                         }
-                    }
-                    tempBuffer.append(temp[0].toUpperCase().replace(" ", ""))
-                    tempBuffer.append(spacing)
-                    tempBuffer.append(buffer.split("<span class=\"comment_date\">")[1].split("<")[0].toUpperCase())
-                    while (list.size >= maxListLen)
-                        list.remove(list[0])
-                    list.add(tempBuffer.toString())
 
+                        tempBuffer.append(temp[0].toUpperCase().replace(" ", ""))
+                        tempBuffer.append(spacing)
+                        tempBuffer.append(buffer.split("<span class=\"comment_date\">")[1].split("<")[0].toUpperCase())
+                        while (list.size >= maxListLen)
+                            list.remove(list[0])
+                        list.add(tempBuffer.toString())
+
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                        println("The buffer: $buffer")
+                    }
                 }
             }
 
