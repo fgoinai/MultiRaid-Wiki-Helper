@@ -13,8 +13,8 @@
 
 package lib
 
-import java.io.BufferedReader
 import java.io.InputStreamReader
+import java.lang.ref.WeakReference
 import java.net.HttpURLConnection
 import java.net.URL
 import java.nio.charset.Charset
@@ -31,13 +31,13 @@ class Yaminabe {
         try {
             val list = ArrayList<String>()
             val con = URL(path).openConnection() as HttpURLConnection
-            val reader = BufferedReader(InputStreamReader(con.inputStream, Charset.forName("EUC-JP")))
-            var buffer: String
+            val reader = InputStreamReader(con.inputStream, Charset.forName("EUC-JP")).buffered()
+            var buffer: WeakReference<String>
 
             while (true) {
-                buffer = java.lang.String(reader.readLine()?.toByteArray() ?: break, "UTF-8") as String
-                if (buffer.contains("<span class=\"comment_date\">")) {
-                    val temp = buffer.split(Regex("\\W")).filter { it.matches(idPattern) }
+                buffer = WeakReference<String>(java.lang.String(reader.readLine()?.toByteArray() ?: break, "UTF-8") as String)
+                if (buffer.get().contains("<span class=\"comment_date\">")) {
+                    val temp = buffer.get().split(Regex("\\W")).filter { it.matches(idPattern) }
                     if (temp.size == 0) {
                         continue
                     }
@@ -45,7 +45,7 @@ class Yaminabe {
                     try {
                         if (!isBaha) {
                             if (isNormal) {
-                                val target = buffer.split("<li>")[1].split(idPattern)[0].replace(" ", "").replace("　", "")
+                                val target = buffer.get().split("<li>")[1].split(idPattern)[0].replace(" ", "").replace("　", "")
                                 if (!inverseNormal) {
                                     if (filter is String) {
                                         if (target == filter) {
@@ -71,14 +71,14 @@ class Yaminabe {
                                     }
                                 }
                             } else {
-                                tempBuffer.append(buffer.split("<li>")[1].split(idPattern)[0].replace(" ", "").replace("　", ""))
+                                tempBuffer.append(buffer.get().split("<li>")[1].split(idPattern)[0].replace(" ", "").replace("　", ""))
                                 tempBuffer.append(spacing)
                             }
                         }
 
                         tempBuffer.append(temp[0].toUpperCase().replace(" ", ""))
                         tempBuffer.append(spacing)
-                        tempBuffer.append(buffer.split("<span class=\"comment_date\">")[1].split("<")[0].toUpperCase())
+                        tempBuffer.append(buffer.get().split("<span class=\"comment_date\">")[1].split("<")[0].toUpperCase())
                         while (list.size >= maxListLen)
                             list.remove(list[0])
                         list.add(tempBuffer.toString())
@@ -89,6 +89,7 @@ class Yaminabe {
                     }
                 }
             }
+
 
             return list.reversed() as ArrayList<String>
         } catch (e: Exception) {

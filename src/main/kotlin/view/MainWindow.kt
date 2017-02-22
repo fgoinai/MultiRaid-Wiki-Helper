@@ -61,18 +61,19 @@ class MainWindow : Application() {
         }
 
         private fun renewItems(path: String, isBaha: Boolean, isNormal: Boolean = false, filter: Any = "", inverseNormal: Boolean = false) {
-            var list: ArrayList<String>
-            Platform.runLater { obList.removeAll(obList) }
+            var list: ArrayList<String>?
+            Platform.runLater { obList.clear() }
             if (!isNormal) {
-                list = Yaminabe().getList(path, isBaha, filter = filter) as ArrayList
+                list = Yaminabe().getList(path, isBaha, filter = filter)
             } else if (!inverseNormal) {
-                list = Yaminabe().getList(path, isBaha, isNormal, filter) as ArrayList
+                list = Yaminabe().getList(path, isBaha, isNormal, filter)
             } else {
-                list = Yaminabe().getList(path, isBaha, isNormal, filter, inverseNormal) as ArrayList
+                list = Yaminabe().getList(path, isBaha, isNormal, filter, inverseNormal)
             }
             Platform.runLater {
-                obList.addAll(list)
-                list.clear()
+                obList.addAll(list as ArrayList<out String>)
+                list?.clear()
+                list = null
                 if (topMsg != obList[0]) {
                     topMsg = obList[0]
                     showNoti(topMsg, topMsg.split(" ").filter { it.matches(Regex("\\w{8}")) }[0])
@@ -138,7 +139,10 @@ class MainWindow : Application() {
                 threadPool.shutdownNow()
                 threadPool = Executors.newSingleThreadScheduledExecutor()
                 val runnable = Runnable {
-                    primaryStage.setOnCloseRequest { threadPool.shutdownNow() }
+                    primaryStage.setOnCloseRequest {
+                        threadPool.shutdownNow()
+                        Platform.exit()
+                    }
                     //                        println(destTab.text)
                     when (destTab.text) {
                         "大巴 150LV", "召喚終突", "方陣HL" -> renewItems(urlList[tabPane.tabs.indexOf(destTab) - 1], tabPane.tabs.indexOf(destTab) == 1)
@@ -161,7 +165,6 @@ class MainWindow : Application() {
 
         root.children.add(borderPane)
         primaryStage.scene = scene
-        primaryStage.setOnCloseRequest { Platform.exit() }
         primaryStage.show()
     }
 
