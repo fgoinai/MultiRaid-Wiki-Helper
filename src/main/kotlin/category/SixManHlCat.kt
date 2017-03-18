@@ -42,8 +42,9 @@ class SixManHlCat : ICategory {
             }
 
             tempBuffer.append(target).append(CatCommonFun.spacing)
-                    .append("需要:").append(requirement).append(CatCommonFun.spacing)
-            return CatCommonFun.commonFilter(src, tempBuffer)
+            CatCommonFun.commonFilter(src, tempBuffer)
+            tempBuffer.append("需要:").append(requirement).append(CatCommonFun.spacing)
+            return tempBuffer.toString()
         }
         return null
     }

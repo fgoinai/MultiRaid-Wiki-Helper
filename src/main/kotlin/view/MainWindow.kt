@@ -98,7 +98,7 @@ class MainWindow : Application() {
                 obList.addAll(list as ArrayList<out String>)
                 if (topMsg != obList[0]) {
                     topMsg = obList[0]
-                    showNoti(topMsg, cat.tag + "  " + topMsg.split(" ").filter { it.matches(Regex("\\w{8}")) }[0])
+                    showNoti(topMsg, topMsg.split(" ").filter { it.matches(Regex("\\w{8}")) }[0])
                 }
             }
         }
