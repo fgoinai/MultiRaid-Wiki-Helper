@@ -13,8 +13,8 @@
 
 package lib
 
+import category.ICategory
 import java.io.InputStreamReader
-import java.lang.ref.WeakReference
 import java.net.HttpURLConnection
 import java.net.URL
 import java.nio.charset.Charset
@@ -32,20 +32,20 @@ class Yaminabe {
             val list = ArrayList<String>()
             val con = URL(path).openConnection() as HttpURLConnection
             val reader = InputStreamReader(con.inputStream, Charset.forName("EUC-JP")).buffered()
-            var buffer: WeakReference<String>
+            var buffer: String
 
             while (true) {
-                buffer = WeakReference<String>(java.lang.String(reader.readLine()?.toByteArray() ?: break, "UTF-8") as String)
-                if (buffer.get().contains("<span class=\"comment_date\">")) {
-                    val temp = buffer.get().split(Regex("\\W")).filter { it.matches(idPattern) }
-                    if (temp.size == 0) {
+                buffer = java.lang.String(reader.readLine()?.toByteArray() ?: break, "UTF-8") as String
+                if (buffer.contains("<span class=\"comment_date\">")) {
+                    val temp = buffer.split(Regex("\\W")).filter { it.matches(idPattern) }
+                    if (temp.isEmpty()) {
                         continue
                     }
                     val tempBuffer = StringBuilder()
                     try {
                         if (!isBaha) {
                             if (isNormal) {
-                                val target = buffer.get().split("<li>")[1].split(idPattern)[0].replace(" ", "").replace("　", "")
+                                val target = buffer.split("<li>")[1].split(idPattern)[0].replace(" ", "").replace("　", "")
                                 if (!inverseNormal) {
                                     if (filter is String) {
                                         if (target == filter) {
@@ -71,14 +71,14 @@ class Yaminabe {
                                     }
                                 }
                             } else {
-                                tempBuffer.append(buffer.get().split("<li>")[1].split(idPattern)[0].replace(" ", "").replace("　", ""))
+                                tempBuffer.append(buffer.split("<li>")[1].split(idPattern)[0].replace(" ", "").replace("　", ""))
                                 tempBuffer.append(spacing)
                             }
                         }
 
                         tempBuffer.append(temp[0].toUpperCase().replace(" ", ""))
                         tempBuffer.append(spacing)
-                        tempBuffer.append(buffer.get().split("<span class=\"comment_date\">")[1].split("<")[0].toUpperCase())
+                        tempBuffer.append(buffer.split("<span class=\"comment_date\">")[1].split("<")[0].toUpperCase())
                         while (list.size >= maxListLen)
                             list.remove(list[0])
                         list.add(tempBuffer.toString())
@@ -90,11 +90,47 @@ class Yaminabe {
                 }
             }
 
-
-            return list.reversed() as ArrayList<String>
+            if (list.isNotEmpty()) {
+                return list.reversed() as ArrayList<String>
+            } else {
+                return null
+            }
         } catch (e: Exception) {
             e.printStackTrace()
         }
         return null
     }
+
+    fun getList2(cat: ICategory): ArrayList<String>? {
+        val list = ArrayList<String>()
+        val con = URL(cat.url).openConnection() as HttpURLConnection
+        val reader = InputStreamReader(con.inputStream, Charset.forName("EUC-JP")).buffered()
+        var buffer: String = ""
+
+        while (true) {
+            try {
+                buffer = java.lang.String(reader.readLine()?.toByteArray() ?: break, "UTF-8") as String
+                if (buffer.contains("<span class=\"comment_date\">")) {
+                    val temp = buffer.split(Regex("\\W")).filter { it.matches(idPattern) }
+                    if (temp.isEmpty()) {
+                        continue
+                    }
+                    val ret = cat.filter(buffer) ?: continue
+                    while (list.size >= maxListLen) {
+                        list.remove(list[0])
+                    }
+                    list.add(ret)
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                println(buffer)
+            }
+        }
+        if (list.isNotEmpty()) {
+            return list.reversed() as ArrayList<String>
+        } else {
+            return null
+        }
+    }
+
 }

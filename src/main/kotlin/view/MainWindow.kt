@@ -13,6 +13,7 @@
 
 package view
 
+import category.*
 import eu.hansolo.enzo.notification.Notification
 import eu.hansolo.enzo.notification.NotifierBuilder
 import javafx.application.Application
@@ -41,12 +42,10 @@ import java.util.concurrent.TimeUnit
 class MainWindow : Application() {
 
     companion object {
-        //        private var thread = Thread()
         private val urlList = ArrayList<String>()
         private val normalList = ArrayList<String>()
         private var listView = lazy { ListView<String>() }
         private val obList = FXCollections.observableArrayList<String>()
-        private var flag = 0
         private var topMsg = ""
         private var threadPool = Executors.newSingleThreadScheduledExecutor()
 
@@ -70,15 +69,37 @@ class MainWindow : Application() {
             } else {
                 list = Yaminabe().getList(path, isBaha, isNormal, filter, inverseNormal)
             }
+            if (list != null) {
+                Platform.runLater {
+                    obList.addAll(list as ArrayList<out String>)
+                    list?.clear()
+                    list = null
+                    if (topMsg != obList[0]) {
+                        topMsg = obList[0]
+                        showNoti(topMsg, topMsg.split(" ").filter { it.matches(Regex("\\w{8}")) }[0])
+                    }
+                }
+            } else {
+                Platform.runLater {
+                    obList.add("沒有場")
+                }
+            }
+        }
+
+        private fun renewItems2(cat: ICategory) {
+            Platform.runLater { obList.clear() }
+            val list = Yaminabe().getList2(cat)
+            if (list == null) {
+                Platform.runLater { obList.add("沒有場") }
+                return
+            }
+
             Platform.runLater {
                 obList.addAll(list as ArrayList<out String>)
-                list?.clear()
-                list = null
                 if (topMsg != obList[0]) {
                     topMsg = obList[0]
-                    showNoti(topMsg, topMsg.split(" ").filter { it.matches(Regex("\\w{8}")) }[0])
+                    showNoti(topMsg, cat.tag + "  " + topMsg.split(" ").filter { it.matches(Regex("\\w{8}")) }[0])
                 }
-//                System.gc()
             }
         }
 
@@ -97,10 +118,8 @@ class MainWindow : Application() {
 
             instance?.setOnShowNotification {
                 Toolkit.getDefaultToolkit().systemClipboard.setContents(StringSelection(rmNo), null)
-//            println("Show")
             }
             instance?.setOnHideNotification {
-                //            println("Stop")
                 instance?.stop()
             }
             instance?.isAlwaysOnTop = true
@@ -111,7 +130,7 @@ class MainWindow : Application() {
     override fun start(primaryStage: Stage) {
         primaryStage.title = "暗鍋助手"
         val root = Group()
-        val scene = Scene(root, 400.0, 250.0, Color.WHITE)
+        val scene = Scene(root, 600.0, 250.0, Color.WHITE)
         val tabPane = TabPane()
         val borderPane = BorderPane()
 
@@ -124,18 +143,9 @@ class MainWindow : Application() {
             tabPane.tabs
                     .filter { it != destTab }
                     .forEach { clearTabContent(it) }
-//            thread.interrupt()
-            flag = flag and (0 shl tabPane.tabs.indexOf(srcTab) - 1)
-//            print(tabPane.tabs.indexOf(srcTab) - 1)
-//            print("    ")
-//            println(flag)
             if (destTab.text == "教學") {
                 fillTutorialTabContent(destTab)
             } else {
-//                flag = flag or (1 shl tabPane.tabs.indexOf(destTab) - 1)
-//                print(tabPane.tabs.indexOf(destTab) - 1)
-//                print("    ")
-//                println(flag)
                 threadPool.shutdownNow()
                 threadPool = Executors.newSingleThreadScheduledExecutor()
                 val runnable = Runnable {
@@ -143,18 +153,16 @@ class MainWindow : Application() {
                         threadPool.shutdownNow()
                         Platform.exit()
                     }
-                    //                        println(destTab.text)
-                    when (destTab.text) {
-                        "大巴 150LV", "召喚終突", "方陣HL" -> renewItems(urlList[tabPane.tabs.indexOf(destTab) - 1], tabPane.tabs.indexOf(destTab) == 1)
-                        "丁丁" -> renewItems(urlList[3], tabPane.tabs.indexOf(destTab) == 1, true, normalList[0])
-                        "小巴" -> renewItems(urlList[3], tabPane.tabs.indexOf(destTab) == 1, true, normalList[1])
-                        "麒麟/黃龍" -> renewItems(urlList[3], tabPane.tabs.indexOf(destTab) == 1, true, normalList.subList(2, 4))
-                        "其他" -> renewItems(urlList[3], tabPane.tabs.indexOf(destTab) == 1, true, normalList, true)
-                    }
+//                    when (destTab.text) {
+//                        "大巴 150LV", "召喚終突", "方陣HL" -> renewItems(urlList[tabPane.tabs.indexOf(destTab) - 1], tabPane.tabs.indexOf(destTab) == 1)
+//                        "丁丁" -> renewItems(urlList[3], tabPane.tabs.indexOf(destTab) == 1, true, normalList[0])
+//                        "小巴" -> renewItems(urlList[3], tabPane.tabs.indexOf(destTab) == 1, true, normalList[1])
+//                        "麒麟/黃龍" -> renewItems(urlList[3], tabPane.tabs.indexOf(destTab) == 1, true, normalList.subList(2, 4))
+//                        "其他" -> renewItems(urlList[3], tabPane.tabs.indexOf(destTab) == 1, true, normalList, true)
+//                    }
+
+                    renewItems2(getCatList()[destTab.text]!!)
                 }
-//                thread = Thread(runnable)
-//                thread.isDaemon = true
-//                thread.start()
                 threadPool.scheduleAtFixedRate(runnable, 0, 30, TimeUnit.SECONDS)
                 fillTabContent(destTab)
             }
@@ -188,22 +196,36 @@ class MainWindow : Application() {
         }
     }
 
+    private fun getCatList(): LinkedHashMap<String, ICategory> {
+        val ret = LinkedHashMap<String, ICategory>()
+
+        ret.put("大巴 150LV", BahamutCat())
+        ret.put("召喚終突", NormalSummonCat())
+        ret.put("方陣HL", MagunaHlCat())
+        ret.put("6人HL", SixManHlCat())
+
+        ret.put("丁丁", NormalRaidCat(NormalRaidCat.Companion.Types.GRANDEE))
+        ret.put("小巴", NormalRaidCat(NormalRaidCat.Companion.Types.WEAK_BAHA))
+        ret.put("麒麟/黃龍", NormalRaidCat(NormalRaidCat.Companion.Types.KIRIN_RYU))
+        ret.put("火天司", NormalRaidCat(NormalRaidCat.Companion.Types.MICHAEL))
+        ret.put("水天司", NormalRaidCat(NormalRaidCat.Companion.Types.GABRIEL))
+        ret.put("土天司", NormalRaidCat(NormalRaidCat.Companion.Types.URIEL))
+        ret.put("風天司", NormalRaidCat(NormalRaidCat.Companion.Types.RAPHAEL))
+
+        ret.put("其他", NormalRaidCat(NormalRaidCat.Companion.Types.OTHER))
+
+        return ret
+    }
+
     private fun tabPaneInit(tabPane: TabPane) {
         tabPane.tabClosingPolicy = TabPane.TabClosingPolicy.UNAVAILABLE
         tabPane.tabs.add(buildTutorialTab())
-        tabPane.tabs.add(buildNabeTab("大巴 150LV"))
-        tabPane.tabs.add(buildNabeTab("召喚終突"))
-        tabPane.tabs.add(buildNabeTab("方陣HL"))
-        // filter from normal
-        tabPane.tabs.add(buildNabeTab("丁丁"))
-        tabPane.tabs.add(buildNabeTab("小巴"))
-        tabPane.tabs.add(buildNabeTab("麒麟/黃龍"))
-        tabPane.tabs.add(buildNabeTab("其他"))
+        getCatList().forEach { tabPane.tabs.add(buildNabeTab(it.key)) }
     }
 
     private fun initNormalList() {
         normalList.add("グランデ")
-        normalList.add("よわバハ")
+        normalList.add("バハ")
         normalList.add("黒麒麟")
         normalList.add("黄龍")
     }
