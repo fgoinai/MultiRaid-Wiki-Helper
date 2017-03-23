@@ -42,12 +42,11 @@ import java.util.concurrent.TimeUnit
 class MainWindow : Application() {
 
     companion object {
-        private val urlList = ArrayList<String>()
-        private val normalList = ArrayList<String>()
         private var listView = lazy { ListView<String>() }
         private val obList = FXCollections.observableArrayList<String>()
         private var topMsg = ""
         private var threadPool = Executors.newSingleThreadScheduledExecutor()
+        val RENEW_INTERVAL = 30L
 
         private val tutContent = "此程式會以30秒的間隔自動更新\r\n" +
                 "看到有場就點一下好了,會自動複製到剪貼版\r\n" +
@@ -59,36 +58,9 @@ class MainWindow : Application() {
             launch(MainWindow::class.java)
         }
 
-        private fun renewItems(path: String, isBaha: Boolean, isNormal: Boolean = false, filter: Any = "", inverseNormal: Boolean = false) {
-            var list: ArrayList<String>?
+        private fun renewItems(cat: ICategory) {
             Platform.runLater { obList.clear() }
-            if (!isNormal) {
-                list = Yaminabe().getList(path, isBaha, filter = filter)
-            } else if (!inverseNormal) {
-                list = Yaminabe().getList(path, isBaha, isNormal, filter)
-            } else {
-                list = Yaminabe().getList(path, isBaha, isNormal, filter, inverseNormal)
-            }
-            if (list != null) {
-                Platform.runLater {
-                    obList.addAll(list as ArrayList<out String>)
-                    list?.clear()
-                    list = null
-                    if (topMsg != obList[0]) {
-                        topMsg = obList[0]
-                        showNoti(topMsg, topMsg.split(" ").filter { it.matches(Regex("\\w{8}")) }[0])
-                    }
-                }
-            } else {
-                Platform.runLater {
-                    obList.add("沒有場")
-                }
-            }
-        }
-
-        private fun renewItems2(cat: ICategory) {
-            Platform.runLater { obList.clear() }
-            val list = Yaminabe().getList2(cat)
+            val list = Yaminabe().getList(cat)
             if (list == null) {
                 Platform.runLater { obList.add("沒有場") }
                 return
@@ -134,9 +106,7 @@ class MainWindow : Application() {
         val tabPane = TabPane()
         val borderPane = BorderPane()
 
-        initUrlList()
         initListView(scene)
-        initNormalList()
         tabPaneInit(tabPane)
 
         tabPane.selectionModel.selectedItemProperty().addListener { observableValue, srcTab, destTab ->
@@ -153,17 +123,10 @@ class MainWindow : Application() {
                         threadPool.shutdownNow()
                         Platform.exit()
                     }
-//                    when (destTab.text) {
-//                        "大巴 150LV", "召喚終突", "方陣HL" -> renewItems(urlList[tabPane.tabs.indexOf(destTab) - 1], tabPane.tabs.indexOf(destTab) == 1)
-//                        "丁丁" -> renewItems(urlList[3], tabPane.tabs.indexOf(destTab) == 1, true, normalList[0])
-//                        "小巴" -> renewItems(urlList[3], tabPane.tabs.indexOf(destTab) == 1, true, normalList[1])
-//                        "麒麟/黃龍" -> renewItems(urlList[3], tabPane.tabs.indexOf(destTab) == 1, true, normalList.subList(2, 4))
-//                        "其他" -> renewItems(urlList[3], tabPane.tabs.indexOf(destTab) == 1, true, normalList, true)
-//                    }
 
-                    renewItems2(getCatList()[destTab.text]!!)
+                    renewItems(getCatList()[destTab.text]!!)
                 }
-                threadPool.scheduleAtFixedRate(runnable, 0, 30, TimeUnit.SECONDS)
+                threadPool.scheduleAtFixedRate(runnable, 0, RENEW_INTERVAL, TimeUnit.SECONDS)
                 fillTabContent(destTab)
             }
         }
@@ -204,15 +167,16 @@ class MainWindow : Application() {
         ret.put("方陣HL", MagunaHlCat())
         ret.put("6人HL", SixManHlCat())
 
+        ret.put("火天司", FourAngelCat(FourAngelCat.Companion.Types.MICHAEL))
+        ret.put("水天司", FourAngelCat(FourAngelCat.Companion.Types.GABRIEL))
+        ret.put("土天司", FourAngelCat(FourAngelCat.Companion.Types.URIEL))
+        ret.put("風天司", FourAngelCat(FourAngelCat.Companion.Types.RAPHAEL))
+
         ret.put("丁丁", NormalRaidCat(NormalRaidCat.Companion.Types.GRANDEE))
         ret.put("小巴", NormalRaidCat(NormalRaidCat.Companion.Types.WEAK_BAHA))
         ret.put("麒麟/黃龍", NormalRaidCat(NormalRaidCat.Companion.Types.KIRIN_RYU))
-        ret.put("火天司", NormalRaidCat(NormalRaidCat.Companion.Types.MICHAEL))
-        ret.put("水天司", NormalRaidCat(NormalRaidCat.Companion.Types.GABRIEL))
-        ret.put("土天司", NormalRaidCat(NormalRaidCat.Companion.Types.URIEL))
-        ret.put("風天司", NormalRaidCat(NormalRaidCat.Companion.Types.RAPHAEL))
-
         ret.put("其他", NormalRaidCat(NormalRaidCat.Companion.Types.OTHER))
+
 
         return ret
     }
@@ -221,26 +185,6 @@ class MainWindow : Application() {
         tabPane.tabClosingPolicy = TabPane.TabClosingPolicy.UNAVAILABLE
         tabPane.tabs.add(buildTutorialTab())
         getCatList().forEach { tabPane.tabs.add(buildNabeTab(it.key)) }
-    }
-
-    private fun initNormalList() {
-        normalList.add("グランデ")
-        normalList.add("バハ")
-        normalList.add("黒麒麟")
-        normalList.add("黄龍")
-    }
-
-    private fun initUrlList() {
-        /***
-         * 0: baha
-         * 1: summon
-         * 2: 6 maguna HL
-         * 3: normal
-         */
-        urlList.add("http://gbf-wiki.com/index.php?%A5%B3%A5%E1%A5%F3%A5%C8%2F%A5%D7%A5%ED%A5%D0%A5%CFHL%B0%C7%C6%E9%CA%E7%BD%B8%C8%C4")
-        urlList.add("http://gbf-wiki.com/index.php?%A5%B3%A5%E1%A5%F3%A5%C8%2F%BE%A4%B4%AD%C0%D0%BA%C7%BD%AA%B2%F2%CA%FC%A5%AF%A5%A8%A5%B9%A5%C8%B5%DF%B1%E7%CA%E7%BD%B8%C8%C4")
-        urlList.add("http://gbf-wiki.com/index.php?%A5%B3%A5%E1%A5%F3%A5%C8%2F18%BF%CDHL%B5%DF%B1%E7%CA%E7%BD%B8%C8%C4")
-        urlList.add("http://gbf-wiki.com/index.php?%A5%B3%A5%E1%A5%F3%A5%C8%2F%C4%CC%BE%EF%A5%DE%A5%EB%A5%C1%A5%D0%A5%C8%A5%EB%B5%DF%B1%E7%CA%E7%BD%B8%C8%C4")
     }
 
     fun buildTutorialTab(): Tab {
