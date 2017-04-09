@@ -11,21 +11,23 @@
  * Copyright (c) 2016. FGO Production. All right reserved
  */
 
-package category
+package src.category
 
-import category.CatCommonFun.idPattern
-import category.CatCommonFun.spacing
+import src.category.CatCommonFun.idPattern
+import src.category.CatCommonFun.spacing
+import src.lib.Conf
 
 class FourAngelCat(val type: Types) : ICategory {
-    override val url = "http://gbf-wiki.com/index.php?%A5%B3%A5%E1%A5%F3%A5%C8%2F%BB%CD%C2%E7%C5%B7%BB%CA%A5%DE%A5%EB%A5%C1%A5%D0%A5%C8%A5%EB_%B5%DF%B1%E7%CA%E7%BD%B8%C8%C4"
+    override val url = Conf.getUrl("四天司")
     override var tag = "四天司"
 
     override fun filter(src: String): String? {
         if (!src.contains(type.tag)) return null
 
-        val tempBuffer = StringBuffer()
+        val tempBuffer = ArrayList<String>()
         val target = getTarget(src)
-        tempBuffer.append(target).append(spacing)
+        tempBuffer.add(target)
+        tempBuffer.add(spacing)
 
         return CatCommonFun.commonFilter(src, tempBuffer)
     }

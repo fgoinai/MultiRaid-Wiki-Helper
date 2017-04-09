@@ -11,18 +11,20 @@
  * Copyright (c) 2016. FGO Production. All right reserved
  */
 
-package category
+package src.category
+
+import src.lib.Conf
 
 class MagunaHlCat : ICategory {
-    override val url = "http://gbf-wiki.com/index.php?%A5%B3%A5%E1%A5%F3%A5%C8%2F18%BF%CDHL%B5%DF%B1%E7%CA%E7%BD%B8%C8%C4"
+    override val url = Conf.getUrl("方陣HL")
     override var tag = "方陣HL"
 
     override fun filter(src: String): String? {
         if (src.contains("<li>")) {
-            val tempBuffer = StringBuffer()
+            val tempBuffer = ArrayList<String>()
 
-            tempBuffer.append(src.split("<li>")[1].split(CatCommonFun.idPattern)[0].replace(" ", "").replace("　", ""))
-                    .append(CatCommonFun.spacing)
+            tempBuffer.add(src.split("<li>")[1].split(CatCommonFun.idPattern)[0].replace(" ", "").replace("　", ""))
+            tempBuffer.add(CatCommonFun.spacing)
 
             return CatCommonFun.commonFilter(src, tempBuffer)
         }

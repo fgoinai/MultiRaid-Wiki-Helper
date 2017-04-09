@@ -11,21 +11,23 @@
  * Copyright (c) 2016. FGO Production. All right reserved
  */
 
-package category
+package src.category
 
-import category.CatCommonFun.idPattern
-import category.CatCommonFun.spacing
+import src.category.CatCommonFun.idPattern
+import src.category.CatCommonFun.spacing
+import src.lib.Conf
 
 class NormalRaidCat(val type: Types) : ICategory {
-    override val url = "http://gbf-wiki.com/index.php?%A5%B3%A5%E1%A5%F3%A5%C8%2F%C4%CC%BE%EF%A5%DE%A5%EB%A5%C1%A5%D0%A5%C8%A5%EB%B5%DF%B1%E7%CA%E7%BD%B8%C8%C4"
+    override val url = Conf.getUrl("通常")
     override var tag = ""
 
     override fun filter(src: String): String? {
-        val tempBuffer = StringBuffer()
+        val tempBuffer = ArrayList<String>()
         val target = getTarget(src)
 
         if (getFlag(target)) {
-            tempBuffer.append(target).append(spacing)
+            tempBuffer.add(target)
+            tempBuffer.add(spacing)
         } else {
             return null
         }

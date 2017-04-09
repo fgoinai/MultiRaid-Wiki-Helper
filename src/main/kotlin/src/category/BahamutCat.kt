@@ -11,14 +11,16 @@
  * Copyright (c) 2016. FGO Production. All right reserved
  */
 
-package category
+package src.category
+
+import src.lib.Conf
 
 class BahamutCat : ICategory {
-    override val url = "http://gbf-wiki.com/index.php?%A5%B3%A5%E1%A5%F3%A5%C8%2F%A5%D7%A5%ED%A5%D0%A5%CFHL%B0%C7%C6%E9%CA%E7%BD%B8%C8%C4"
+    override val url = Conf.getUrl("大巴")
     override var tag = "大巴 150LV"
 
     override fun filter(src: String): String? {
-        return CatCommonFun.commonFilter(src, StringBuffer())
+        return CatCommonFun.commonFilter(src, ArrayList<String>())
     }
 
 }
