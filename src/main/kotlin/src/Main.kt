@@ -32,7 +32,7 @@ import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 
-class Main : Application(), CbUpdateList {
+class Main : Application() {
 
     companion object {
         private val RENEW_LIMIT_LOW = 10L
@@ -107,10 +107,10 @@ class Main : Application(), CbUpdateList {
             obList.clear()
             obList.add("更新中")
         }
-        nabe.value.getList(cat, this)
+        nabe.value.getList(cat, CatCommonFun.CbUpdateList { update(it) })
     }
 
-    override fun update(src: java.util.ArrayList<String>?) {
+    private fun update(src: java.util.ArrayList<String>?) {
         Platform.runLater { obList.clear() }
         if (src == null) {
             Platform.runLater {

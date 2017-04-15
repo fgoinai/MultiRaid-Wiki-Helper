@@ -15,47 +15,71 @@ package src.lib
 
 import src.category.CatCommonFun.idPattern
 import src.category.CatCommonFun.nonWordPattern
+import src.category.CatCommonFun.spacing
 import src.category.CbUpdateList
 import src.category.ICategory
 import java.io.InputStreamReader
 import java.net.HttpURLConnection
 import java.net.URL
 import java.nio.charset.Charset
+import java.text.SimpleDateFormat
 import java.util.*
+import java.util.concurrent.*
+import kotlin.coroutines.experimental.buildSequence
 import kotlin.system.measureTimeMillis
 
 class Yaminabe {
-    val maxListLen = 5
+    private val maxListLen = 5
 
     fun getList(cat: ICategory, cb: CbUpdateList) {
-        val list = ArrayList<String>()
+        val queue = ConcurrentLinkedQueue<String>()
         val con = URL(cat.url).openConnection() as HttpURLConnection
-        con.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; WOW64; rv:51.0) Gecko/20100101 Firefox/51.0") //Anti Detection
+        con.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; WOW64; rv:52.0) Gecko/20100101 Firefox/52.0") //Anti Detection
         val reader = InputStreamReader(con.inputStream, Charset.forName("EUC-JP")).buffered()
-        var buffer: String
+        val buffer = buildSequence {
+            while (true) {
+                yield(java.lang.String(reader.readLine()?.toByteArray() ?: break, "UTF-8") as String)
+            }
+        }
 
         val time = measureTimeMillis {
-            while (true) {
-                try {
-                    buffer = java.lang.String(reader.readLine()?.toByteArray() ?: break, "UTF-8") as String
-                    if (buffer.contains("<span class=\"comment_date\">")) {
-                        val temp = buffer.split(nonWordPattern).parallelStream().filter { it.matches(idPattern) }.toArray()
-                        if (temp.isEmpty()) {
-                            continue
-                        }
-                        val ret = cat.filter(buffer) ?: continue
+            try {
+                buffer.forEach {
+                    if (it.contains("<span class=\"comment_date\">")) {
+                        if (isTargetEmpty(it)) return
+                        val ret = cat.filter(it) ?: return
 
-                        while (list.size >= maxListLen) {
-                            list.remove(list[0])
+                        while (queue.size >= maxListLen) {
+                            queue.sortedWith(
+                                    compareBy(
+                                            {
+                                                SimpleDateFormat("yyyy-MM-dd").parse(
+                                                        it.split(spacing)
+                                                                .filter { it.contains(Regex("\\d{4}-\\d{2}-\\d{2}")) }[0]
+                                                                .split(" ")[0]
+                                                )
+                                            },
+                                            {
+                                                SimpleDateFormat("HH:mm:ss").parse(
+                                                        it.split(spacing)
+                                                                .filter { it.contains(Regex("\\d{2}:\\d{2}:\\d{2}")) }[0]
+                                                                .split(" ")
+                                                                .filter { it.contains(Regex("\\d{2}:\\d{2}:\\d{2}")) }[0]
+                                                )
+                                            }
+                                    )
+                            )
+                            queue.poll()
                         }
-                        list.add(ret)
+                        queue.offer(ret)
                     }
-                } catch (e: Exception) {
-                    e.printStackTrace()
                 }
+            } catch (e: Exception) {
+                e.printStackTrace()
             }
-            if (list.isNotEmpty()) {
-                cb.update(list.reversed() as ArrayList<String>)
+
+            if (queue.isNotEmpty()) {
+                cb.update(queue.reversed() as ArrayList<String>)
             } else {
                 cb.update(null)
             }
@@ -63,4 +87,9 @@ class Yaminabe {
         println("${javaClass.name} cost $time")
     }
 
+    fun isTargetEmpty(src: String) : Boolean {
+        return src.split(nonWordPattern)
+                .filter { it.matches(idPattern) }
+                .isEmpty()
+    }
 }

@@ -51,7 +51,7 @@ class NormalRaidCat(val type: Types) : ICategory {
         enum class Types(val tag: String) {
             OTHER("其他"),
             GRANDEE("グランデ"),
-            WEAK_BAHA("よわバハ/よわばは"),
+            WEAK_BAHA("よわバハ/よわばは/バハ/ばは"),
             KIRIN_RYU("黒麒麟/黄龍")
         }
     }

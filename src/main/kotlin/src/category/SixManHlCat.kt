@@ -67,7 +67,7 @@ class SixManHlCat : ICategory {
         val temp = CatCommonFun.commonFilter(src, tempBuffer) ?: throw Exception("${javaClass.name} has null value on CatcommonFun.commonFilter")
         tempBuffer.clear()
         tempBuffer.add(temp)
-        tempBuffer.add("需要:")
+        tempBuffer.add(" 需要:")
         tempBuffer.add(requirement.await())
         tempBuffer.add(CatCommonFun.spacing)
 

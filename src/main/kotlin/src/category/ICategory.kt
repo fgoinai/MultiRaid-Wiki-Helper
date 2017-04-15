@@ -14,6 +14,7 @@
 package src.category
 
 import java.util.*
+import kotlin.collections.ArrayList
 
 interface ICategory {
     val url: String
@@ -70,5 +71,9 @@ object CatCommonFun {
 
 
         return ret
+    }
+
+    fun CbUpdateList(updater: (ArrayList<String>) -> Unit) : CbUpdateList = object : CbUpdateList {
+        override fun update(src: ArrayList<String>?) = updater(src as ArrayList<String>)
     }
 }

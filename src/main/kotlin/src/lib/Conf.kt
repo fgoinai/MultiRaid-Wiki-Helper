@@ -17,7 +17,7 @@ import org.ini4j.Ini
 import java.io.File
 
 object Conf {
-    private val ini = Ini(File("conf.ini"))
+    private val ini = Ini(javaClass.classLoader.getResource("conf.ini"))
 
     fun getIntervalConf(lower: Long): Long {
         var ret = ini.get("Other", "RenewInterval", Long::class.java)
@@ -29,7 +29,7 @@ object Conf {
 
     fun getUrlConf(): HashMap<String, String> {
         val ret = HashMap<String, String>()
-        getIndex().forEach { ret.put(it, ini.get("URL", it)) }
+        getIndex.forEach { ret.put(it, ini.get("URL", it)) }
         return ret
     }
 
@@ -37,7 +37,7 @@ object Conf {
         return ini.get("URL", tag)
     }
 
-    private fun getIndex() = arrayOf(
+    private val getIndex = arrayOf(
             "大巴",
             "四天司",
             "方陣HL",
