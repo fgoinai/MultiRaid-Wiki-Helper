@@ -1,5 +1,7 @@
 # MultiRaid Wiki Helper
 
+## This repo is deprecated. For the new helper tools, please search Yaminabe xxxx under my repo list.
+
 ### Introduction
 This is used for GBF wiki raid finding. The default refresh time is 30 seconds.
 Please use with caution.
